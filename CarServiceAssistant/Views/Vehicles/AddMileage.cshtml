@@ -1,0 +1,26 @@
+﻿@model CarServiceAssistant.ViewModels.MileageCreateVm
+
+<div class="mb-3">
+    <a asp-controller="Vehicles"
+       asp-action="Details"
+       asp-route-id="@ViewBag.VehicleId"
+       class="btn btn-outline-white">
+        ← Wróć do pojazdu
+    </a>
+</div>
+
+<h2>Dodaj przebieg</h2>
+
+<form asp-action="AddMileage" asp-route-id="@ViewBag.VehicleId" method="post">
+    <div class="mb-3">
+        <label asp-for="MileageKm" class="form-label">Przebieg (km)</label>
+        <input class="form-control" asp-for="MileageKm" />
+        <span asp-validation-for="MileageKm" class="text-danger"></span>
+    </div>
+
+    <button class="btn btn-outline-white" type="submit">Zapisz</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

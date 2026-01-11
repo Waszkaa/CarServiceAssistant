@@ -1,0 +1,63 @@
+﻿@model List<CarServiceAssistant.Domain.ServiceRecord>
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a asp-controller="Vehicles"
+           asp-action="Details"
+           asp-route-id="@ViewBag.VehicleId"
+           class="btn btn-outline-white">
+            ← Wróć do pojazdu
+        </a>
+    </div>
+
+    <div>
+        <a asp-action="Create"
+           asp-route-vehicleId="@ViewBag.VehicleId"
+           class="btn btn-outline-white">
+            + Dodaj serwis
+        </a>
+    </div>
+</div>
+
+<h2>Historia serwisów</h2>
+<p><strong>@ViewBag.VehicleTitle</strong></p>
+
+@if (!Model.Any())
+{
+    <p>Brak wpisów serwisowych.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Obszar</th>
+                <th>Data</th>
+                <th>Przebieg</th>
+                <th>Notatka</th>
+                <th class="text-end"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var x in Model)
+            {
+                <tr>
+                    <td>@Html.DisplayFor(_ => x.Area)</td>
+                    <td>@(x.DoneAtUtc?.ToLocalTime().ToString("yyyy-MM-dd") ?? "-")</td>
+                    <td>@(x.DoneAtMileageKm?.ToString() ?? "-") km</td>
+                    <td>@(x.Notes ?? "")</td>
+                    <td class="text-end">
+                        <form asp-action="Delete" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@x.Id" />
+                            <button type="submit" class="btn btn-outline-white btn-sm">
+                                Usuń
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

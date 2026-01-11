@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CarServiceAssistant</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="app-body">
+
+    <div class="app-shell">
+        <aside class="app-sidebar">
+            <div class="app-brand">
+                <div class="app-logo">CS</div>
+                <div>
+                    <div class="app-name">CarService</div>
+                    <div class="app-sub">Assistant</div>
+                </div>
+            </div>
+
+            <nav class="app-nav">
+                <a class="app-link @IsActive("Home","Index")" asp-controller="Home" asp-action="Index">
+                    <span>🏠</span> <span>Dashboard</span>
+                </a>
+
+                <a class="app-link @IsActive("Vehicles","Index")" asp-controller="Vehicles" asp-action="Index">
+                    <span>🚗</span> <span>Moje auta</span>
+                </a>
+
+                <a class="app-link @IsActive("Vehicles","Create")" asp-controller="Vehicles" asp-action="Create">
+                    <span>➕</span> <span>Dodaj auto</span>
+                </a>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="app-link @IsActive("Admin","Users")"
+                       asp-controller="Admin"
+                       asp-action="Users">
+                        <span>🛠️</span> <span>Admin</span>
+                    </a>
+
+                    <div class="app-nav-sep"></div>
+                }
+
+                <div class="app-nav-sep"></div>
+
+                @if (User?.Identity?.IsAuthenticated ?? false)
+                {
+                    <form asp-area="Identity" asp-page="/Account/Logout" method="post">
+                        <button class="app-link app-link-danger w-100 text-start" type="submit">
+                            <span>⎋</span> <span>Wyloguj</span>
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <a class="app-link @IsActive("Account","Login")" asp-area="Identity" asp-page="/Account/Login">
+                        <span>🔐</span> <span>Zaloguj</span>
+                    </a>
+                }
+            </nav>
+        </aside>
+
+        <main class="app-main">
+            <header class="app-topbar">
+                <div class="app-topbar-left">
+                    <button class="btn btn-sm btn-outline-secondary d-md-none" type="button" onclick="toggleSidebar()">
+                        ☰
+                    </button>
+                    <div class="app-title">@ViewData["Title"]</div>
+                </div>
+
+                <div class="app-topbar-right">
+                    @if (User?.Identity?.IsAuthenticated ?? false)
+                    {
+                        <span class="text-muted small">Zalogowano</span>
+                    }
+                </div>
+            </header>
+
+            <section class="app-content">
+                @RenderBody()
+            </section>
+
+            <footer class="app-footer text-muted small">
+                © @DateTime.Now.Year CarServiceAssistant
+            </footer>
+        </main>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.app-shell').classList.toggle('sidebar-open');
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+@functions {
+    string IsActive(string controller, string action)
+    {
+        var c = ViewContext.RouteData.Values["controller"]?.ToString();
+        var a = ViewContext.RouteData.Values["action"]?.ToString();
+        return (string.Equals(c, controller, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(a, action, StringComparison.OrdinalIgnoreCase))
+            ? "active"
+            : "";
+    }
+}

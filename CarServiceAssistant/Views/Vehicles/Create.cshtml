@@ -1,0 +1,47 @@
+﻿@model CarServiceAssistant.ViewModels.VehicleCreateVm
+@using CarServiceAssistant.Domain
+
+<div class="mb-3">
+    <a asp-controller="Vehicles"
+       asp-action="Index"
+       class="btn btn-outline-white">
+        ← Wróć do listy
+    </a>
+</div>
+
+<h2>Dodaj pojazd</h2>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-2">
+        <label class="form-label">Marka</label>
+        <input class="form-control" asp-for="Brand" />
+        <span asp-validation-for="Brand" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2">
+        <label class="form-label">Model</label>
+        <input class="form-control" asp-for="Model" />
+        <span asp-validation-for="Model" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2">
+        <label class="form-label">Rok</label>
+        <input class="form-control" asp-for="Year" />
+        <span asp-validation-for="Year" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Paliwo</label>
+        <select class="form-select" asp-for="FuelType" asp-items="Html.GetEnumSelectList<FuelType>()"></select>
+        <span asp-validation-for="FuelType" class="text-danger"></span>
+    </div>
+
+    <button class="btn btn-outline-white" type="submit">Zapisz</button>
+    <a class="btn btn-outline-white ms-2" asp-action="Index">Anuluj</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

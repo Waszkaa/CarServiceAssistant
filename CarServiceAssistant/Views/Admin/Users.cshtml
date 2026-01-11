@@ -1,0 +1,21 @@
+﻿@model List<CarServiceAssistant.ViewModels.AdminUserRowVm>
+
+<h2>Panel admina — użytkownicy</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Pojazdy</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.Email</td>
+                <td>@u.VehiclesCount</td>
+            </tr>
+        }
+    </tbody>
+</table>

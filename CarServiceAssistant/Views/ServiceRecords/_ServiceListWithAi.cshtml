@@ -1,0 +1,30 @@
+﻿@model CarServiceAssistant.ViewModels.ServiceListWithAiVm
+
+<ul class="list-unstyled">
+    @foreach (var item in Model.Items)
+    {
+        var areaInt = (int)item.Area;
+
+        <li class="mb-3">
+            <div>
+                <strong>@item.Area</strong> — @item.Status
+            </div>
+
+            <div class="mt-2 d-flex align-items-center gap-2">
+                <button type="button"
+                        class="btn btn-outline-white btn-sm"
+                        data-ai-btn="1"
+                        data-vehicle-id="@Model.VehicleId"
+                        data-area="@areaInt">
+                    Zapytaj AI
+                </button>
+
+                <span id="aiStatus_@(Model.VehicleId)_@areaInt"></span>
+            </div>
+
+            <div id="aiBox_@(Model.VehicleId)_@areaInt"
+                 class="mt-2"
+                 style="display:none;"></div>
+        </li>
+    }
+</ul>

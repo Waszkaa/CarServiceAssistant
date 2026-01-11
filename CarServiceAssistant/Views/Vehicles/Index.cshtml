@@ -1,0 +1,44 @@
+﻿@model List<CarServiceAssistant.Domain.Vehicle>
+@using CarServiceAssistant.Extensions
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Moje pojazdy</h2>
+
+    <a asp-action="Create" class="btn btn-outline-white">
+        + Dodaj pojazd
+    </a>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Pojazd</th>
+            <th>Paliwo</th>
+            <th>Przebieg</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var v in Model)
+        {
+            <tr>
+                <td>@v.Brand @v.Model (@v.Year)</td>
+                <td>@v.FuelType.GetDisplayName()</td>
+                <td>@(v.CurrentMileageKm?.ToString() ?? "-") km</td>
+                <td class="text-end">
+                    <a asp-action="Details"
+                       asp-route-id="@v.Id"
+                       class="btn btn-outline-white btn-sm">
+                        Szczegóły
+                    </a>
+
+                    <a asp-action="Analysis"
+                       asp-route-id="@v.Id"
+                       class="btn btn-outline-white btn-sm ms-2">
+                        Analiza
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

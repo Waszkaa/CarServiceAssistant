@@ -1,0 +1,61 @@
+﻿@model CarServiceAssistant.ViewModels.ServiceRecordCreateVm
+@using CarServiceAssistant.Domain
+
+<div class="mb-3">
+    <a asp-controller="Vehicles"
+       asp-action="Details"
+       asp-route-id="@Model.VehicleId"
+       class="btn btn-outline-white">
+        ← Wróć do pojazdu
+    </a>
+
+    <a asp-action="Index"
+       asp-route-vehicleId="@Model.VehicleId"
+       class="btn btn-outline-white ms-2">
+        ← Wróć do historii serwisów
+    </a>
+</div>
+
+<h2>Dodaj serwis</h2>
+<p><strong>@ViewBag.VehicleTitle</strong></p>
+<p>Aktualny przebieg: <strong>@(ViewBag.CurrentMileage?.ToString() ?? "-") km</strong></p>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="VehicleId" />
+
+    <div class="mb-2">
+        <label class="form-label">Obszar</label>
+        <select class="form-select" asp-for="Area" asp-items="Html.GetEnumSelectList<ServiceArea>()"></select>
+        <span asp-validation-for="Area" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2">
+        <label class="form-label">Data serwisu</label>
+        <input class="form-control" asp-for="DoneAtDate" type="date" />
+        <span asp-validation-for="DoneAtDate" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2">
+        <label class="form-label">Przebieg przy serwisie (km)</label>
+        <input class="form-control" asp-for="DoneAtMileageKm" />
+        <span asp-validation-for="DoneAtMileageKm" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Notatka (opcjonalnie)</label>
+        <textarea class="form-control" asp-for="Notes" rows="3"></textarea>
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+
+    <button class="btn btn-outline-white" type="submit">Zapisz</button>
+    <a class="btn btn-outline-white ms-2"
+       asp-action="Index"
+       asp-route-vehicleId="@Model.VehicleId">
+        Anuluj
+    </a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

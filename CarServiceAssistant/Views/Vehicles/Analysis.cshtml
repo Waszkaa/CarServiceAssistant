@@ -1,0 +1,116 @@
+﻿@model CarServiceAssistant.ViewModels.VehicleAnalysisVm
+@using CarServiceAssistant.Domain
+
+@functions {
+    string GetStatusLabel(ServiceStatus status) => status switch
+    {
+        ServiceStatus.Ok => "OK",
+        ServiceStatus.Approaching => "Zbliża się",
+        ServiceStatus.Urgent => "Pilne",
+        _ => ""
+    };
+
+    string GetStatusClass(ServiceStatus status) => status switch
+    {
+        ServiceStatus.Ok => "status-ok",
+        ServiceStatus.Approaching => "status-warning",
+        ServiceStatus.Urgent => "status-danger",
+        _ => ""
+    };
+}
+
+<!-- BACK + ACTIONS -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a asp-controller="Vehicles"
+           asp-action="Details"
+           asp-route-id="@Model.VehicleId"
+           class="btn btn-outline-white">
+            ← Wróć do pojazdu
+        </a>
+    </div>
+
+    <div>
+        <a asp-controller="Vehicles"
+           asp-action="AddMileage"
+           asp-route-id="@Model.VehicleId"
+           class="btn btn-outline-white">
+            + Dodaj przebieg
+        </a>
+    </div>
+</div>
+
+<h2>Analiza: @Model.Title</h2>
+<p>Aktualny przebieg: <strong>@Model.CurrentMileageKm km</strong></p>
+
+<h4>Co zrobić teraz</h4>
+@if (!Model.DoNow.Any())
+{
+    <p>Brak pilnych rzeczy.</p>
+}
+else
+{
+    <ul>
+        @foreach (var x in Model.DoNow)
+        {
+            <li><strong>@x.Title</strong> — @x.WhatToDoNow</li>
+        }
+    </ul>
+}
+
+<h4>Co sprawdzić przy najbliższej wizycie</h4>
+@if (!Model.CheckSoon.Any())
+{
+    <p>Brak pozycji “zbliża się”.</p>
+}
+else
+{
+    <ul>
+        @foreach (var x in Model.CheckSoon)
+        {
+            <li><strong>@x.Title</strong> — @x.WhatToCheckSoon</li>
+        }
+    </ul>
+}
+
+<h4>Szczegóły</h4>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Obszar</th>
+            <th>Status</th>
+            <th>Opis</th>
+            <th>AI</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model.Items)
+        {
+            <tr>
+                <td>@x.Title</td>
+                <td>
+                    @if (x.Status == ServiceStatus.Unknown)
+                    {
+                        <span class="badge-muted">Brak danych</span>
+                    }
+                    else
+                    {
+                        <span class="status @GetStatusClass(x.Status)">
+                            @GetStatusLabel(x.Status)
+                        </span>
+                    }
+                </td>
+                <td>@x.Description</td>
+                <td>
+                    <a asp-controller="ServiceRecords"
+                       asp-action="Ai"
+                       asp-route-vehicleId="@Model.VehicleId"
+                       asp-route-area="@x.Area"
+                       class="btn btn-outline-white btn-sm">
+                        Interwały
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

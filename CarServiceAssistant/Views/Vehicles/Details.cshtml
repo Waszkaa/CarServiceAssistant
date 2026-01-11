@@ -1,0 +1,72 @@
+﻿@model CarServiceAssistant.Domain.Vehicle
+@using CarServiceAssistant.Extensions
+
+<!-- BACK + ACTIONS -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a asp-action="Index"
+       class="btn btn-outline-white">
+        ← Wróć do listy
+    </a>
+
+    <div>
+        <a asp-action="AddMileage"
+           asp-route-id="@Model.Id"
+           class="btn btn-outline-white">
+            + Przebieg
+        </a>
+
+        <a asp-action="Analysis"
+           asp-route-id="@Model.Id"
+           class="btn btn-outline-white ms-2">
+            Analiza
+        </a>
+
+        <a asp-controller="ServiceRecords"
+           asp-action="Index"
+           asp-route-vehicleId="@Model.Id"
+           class="btn btn-outline-white ms-2">
+            Historia serwisów
+        </a>
+
+        <a asp-controller="ServiceRecords"
+           asp-action="Create"
+           asp-route-vehicleId="@Model.Id"
+           class="btn btn-outline-white ms-2">
+            + Serwis
+        </a>
+    </div>
+</div>
+
+<h2>@Model.Brand @Model.Model (@Model.Year)</h2>
+
+<p>Paliwo: <strong>@Model.FuelType.GetDisplayName()</strong></p>
+<p>Aktualny przebieg: <strong>@(Model.CurrentMileageKm?.ToString() ?? "-")</strong> km</p>
+
+<hr />
+
+<h4>Historia przebiegów</h4>
+
+@if (Model.MileageEntries is null || !Model.MileageEntries.Any())
+{
+    <p>Brak wpisów przebiegu.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Przebieg</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model.MileageEntries.OrderByDescending(x => x.LoggedAtUtc))
+            {
+                <tr>
+                    <td>@m.LoggedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@m.MileageKm km</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

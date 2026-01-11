@@ -1,0 +1,134 @@
+﻿@model CarServiceAssistant.ViewModels.AiViewVm
+@using CarServiceAssistant.Domain
+
+@functions {
+    string AreaPl(ServiceArea area) => area switch
+    {
+        ServiceArea.EngineOil => "Olej silnikowy",
+        ServiceArea.Timing => "Rozrząd",
+        ServiceArea.Brakes => "Hamulce",
+        ServiceArea.AirFilter => "Filtr powietrza",
+        ServiceArea.CabinFilter => "Filtr kabinowy",
+        ServiceArea.BrakeFluid => "Płyn hamulcowy",
+        ServiceArea.Coolant => "Płyn chłodniczy",
+        ServiceArea.Battery => "Akumulator",
+        ServiceArea.Inspection => "Inspekcja ogólna",
+        _ => area.ToString()
+    };
+}
+<div class="mb-3">
+    <a asp-controller="Vehicles"
+       asp-action="Analysis"
+       asp-route-id="@Model.VehicleId"
+       class="btn btn-outline-white">
+        ← Wróć do analizy
+    </a>
+
+    <a asp-controller="Vehicles"
+       asp-action="Details"
+       asp-route-id="@Model.VehicleId"
+       class="btn btn-outline-white ms-2">
+        Wróć do pojazdu
+    </a>
+</div>
+
+<h2>Interwały serwisowe: @AreaPl(Model.Area)</h2>
+<p>@Model.VehicleTitle</p>
+
+<hr />
+
+<h3>@Model.RulesSummary</h3>
+
+@if (Model.RulesIntervals?.Any() == true)
+{
+    <ul>
+        @foreach (var x in Model.RulesIntervals)
+        {
+            <li>@x</li>
+        }
+    </ul>
+}
+
+@if (Model.RulesDetails?.Any() == true)
+{
+    <div style="margin-top:10px;">
+        <h4>Jak działa ocena w aplikacji</h4>
+        <ul>
+            @foreach (var x in Model.RulesDetails)
+            {
+                <li>@x</li>
+            }
+        </ul>
+    </div>
+}
+
+<hr />
+
+<h3>Sugestia AI</h3>
+
+<button id="aiBtn"
+        type="button"
+        class="btn btn-outline-white">
+    Zapytaj AI
+</button>
+<span id="aiStatus" style="margin-left:10px;"></span>
+
+<div id="aiBox" style="display:none; margin-top:12px;"></div>
+
+<script>
+    (() => {
+        const vehicleId = @Model.VehicleId;
+        const area = @((int)Model.Area);
+
+        const btn = document.getElementById("aiBtn");
+        const status = document.getElementById("aiStatus");
+        const box = document.getElementById("aiBox");
+
+        const cacheKey = `ai:${vehicleId}:${area}`;
+
+        const renderAi = (r) => {
+            let html = "";
+
+            if (r.plainLanguageSummary) html += `<p class="ai-summary">${r.plainLanguageSummary}</p>`;
+
+            if (r.keyIntervals?.length) {
+                html += "<h4>Najważniejsze informacje</h4><ul>";
+                r.keyIntervals.forEach(x => html += `<li>${x}</li>`);
+                html += "</ul>";
+            }
+
+            if (r.safetyNote) html += `<div class="ai-note">${r.safetyNote}</div>`;
+
+            box.innerHTML = html;
+            box.style.display = "block";
+        };
+
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+            try { renderAi(JSON.parse(cached)); } catch {}
+        }
+
+        btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            status.textContent = "Pobieram z AI...";
+
+            try {
+                const res = await fetch(`/Vehicles/AiResult?vehicleId=${vehicleId}&area=${area}`, { cache: "no-store" });
+                const data = await res.json();
+
+                if (!data.success) {
+                    status.textContent = data.message ?? "Nie udało się pobrać danych AI.";
+                    btn.disabled = false;
+                    return;
+                }
+
+                sessionStorage.setItem(cacheKey, JSON.stringify(data.result));
+                renderAi(data.result);
+                status.textContent = "";
+            } catch (e) {
+                status.textContent = "Błąd połączenia z usługą AI.";
+                btn.disabled = false;
+            }
+        });
+    })();
+</script>
