@@ -85,22 +85,46 @@
         const box = document.getElementById("aiBox");
 
         const cacheKey = `ai:${vehicleId}:${area}`;
+        const esc = (s) => (s ?? "").toString()
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
 
         const renderAi = (r) => {
-            let html = "";
+          console.log("renderAi called with:", r);
 
-            if (r.plainLanguageSummary) html += `<p class="ai-summary">${r.plainLanguageSummary}</p>`;
+          let html = "";
 
-            if (r.keyIntervals?.length) {
-                html += "<h4>Najważniejsze informacje</h4><ul>";
-                r.keyIntervals.forEach(x => html += `<li>${x}</li>`);
-                html += "</ul>";
+          if (r?.title || r?.bullets || r?.disclaimer) {
+            if (r.title) html += `<h4>${esc(r.title)}</h4>`;
+
+            if (Array.isArray(r.bullets) && r.bullets.length) {
+              html += "<ul>";
+              r.bullets.forEach(x => html += `<li>${esc(x)}</li>`);
+              html += "</ul>";
             }
 
-            if (r.safetyNote) html += `<div class="ai-note">${r.safetyNote}</div>`;
+            if (r.disclaimer) html += `<div class="ai-note">${esc(r.disclaimer)}</div>`;
 
             box.innerHTML = html;
             box.style.display = "block";
+            return;
+          }
+
+          if (r?.plainLanguageSummary) html += `<p class="ai-summary">${esc(r.plainLanguageSummary)}</p>`;
+
+          if (Array.isArray(r?.keyIntervals) && r.keyIntervals.length) {
+            html += "<h4>Najważniejsze informacje</h4><ul>";
+            r.keyIntervals.forEach(x => html += `<li>${esc(x)}</li>`);
+            html += "</ul>";
+          }
+
+          if (r?.safetyNote) html += `<div class="ai-note">${esc(r.safetyNote)}</div>`;
+
+          box.innerHTML = html || "<div class='ai-note'>Brak danych do wyświetlenia.</div>";
+          box.style.display = "block";
         };
 
         const cached = sessionStorage.getItem(cacheKey);

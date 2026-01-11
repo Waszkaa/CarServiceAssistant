@@ -28,6 +28,18 @@ public sealed class GeminiAiAssistant : IAiAssistant
         CancellationToken ct)
     {
         var prompt = BuildPrompt(brand, model, year, fuelType, area);
+
+        _log.LogInformation(
+            "Gemini prompt for vehicle {VehicleId} ({Brand} {Model} {Year}, {Fuel}, {Area}):\n{Prompt}",
+            vehicleId,
+            brand,
+            model,
+            year,
+            fuelType,
+            area,
+            prompt
+        );
+
         var modelId = NormalizeModel(_opt.Model);
 
         var url = $"https://generativelanguage.googleapis.com/v1beta/models/{modelId}:generateContent?key={_opt.ApiKey}";
@@ -104,20 +116,14 @@ public sealed class GeminiAiAssistant : IAiAssistant
             var part0 = parts[0];
 
             string? jsonText = null;
-
             if (part0.TryGetProperty("text", out var text))
                 jsonText = text.GetString();
 
             if (string.IsNullOrWhiteSpace(jsonText))
-            {
-                if (part0.TryGetProperty("inlineData", out var inlineData) &&
-                    inlineData.TryGetProperty("data", out var data))
-                {
-                    jsonText = data.GetString();
-                }
-            }
+                return null;
 
-            if (string.IsNullOrWhiteSpace(jsonText)) return null;
+            jsonText = jsonText.Trim();
+            jsonText = jsonText.Trim('`');
 
             using var parsed = JsonDocument.Parse(jsonText);
             var root = parsed.RootElement;
@@ -125,35 +131,38 @@ public sealed class GeminiAiAssistant : IAiAssistant
             string GetString(string name)
                 => root.TryGetProperty(name, out var p) ? (p.GetString() ?? "") : "";
 
+            string[] GetStringArray(string name)
+                => root.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.Array
+                    ? p.EnumerateArray()
+                        .Select(x => StripSimpleMarkdown((x.GetString() ?? "").Trim()))
+                        .Where(x => x.Length > 0)
+                        .ToArray()
+                    : Array.Empty<string>();
+
             var title = StripSimpleMarkdown(GetString("title"));
             var disclaimer = StripSimpleMarkdown(GetString("disclaimer"));
 
-            var bullets = root.TryGetProperty("bullets", out var b) && b.ValueKind == JsonValueKind.Array
-                ? b.EnumerateArray()
-                    .Select(x => StripSimpleMarkdown((x.GetString() ?? "").Trim()))
-                    .Where(x => x.Length > 0)
-                    .ToArray()
-                : Array.Empty<string>();
+            var intervals = GetStringArray("intervals");
+            var notes = GetStringArray("notes");
+            var during = StripSimpleMarkdown(GetString("during"));
 
-            var sources = root.TryGetProperty("sources", out var s) && s.ValueKind == JsonValueKind.Array
-                ? s.EnumerateArray()
-                    .Select(x =>
-                    {
-                        var t = x.TryGetProperty("title", out var tt) ? StripSimpleMarkdown((tt.GetString() ?? "").Trim()) : "Źródło";
-                        var u = x.TryGetProperty("url", out var uu) ? (uu.GetString() ?? "").Trim() : "";
-                        return new AiIntervalSource(t.Length > 0 ? t : "Źródło", u);
-                    })
-                    .Where(x => IsHttpUrl(x.Url))
-                    .ToArray()
-                : Array.Empty<AiIntervalSource>();
+            var bullets = intervals
+                .Select(x => x.StartsWith("•") ? x : $"• {x}")
+                .Concat(notes.Select(x => x.StartsWith("•") ? x : $"• {x}"))
+                .ToList();
+
+            if (!string.IsNullOrWhiteSpace(during))
+                bullets.Add(during.StartsWith("Przy okazji", StringComparison.OrdinalIgnoreCase)
+                    ? during
+                    : $"Przy okazji: {during}");
 
             if (string.IsNullOrWhiteSpace(title)) title = "Sugestia AI";
             if (string.IsNullOrWhiteSpace(disclaimer)) disclaimer = "Informacje orientacyjne.";
 
             return new AiIntervalResult(
                 title,
-                bullets,
-                sources,
+                bullets.ToArray(),
+                Array.Empty<AiIntervalSource>(),
                 disclaimer
             );
         }
@@ -176,7 +185,7 @@ public sealed class GeminiAiAssistant : IAiAssistant
 
         return
             "Zwróć WYŁĄCZNIE poprawny JSON w formacie:\n" +
-            "{\"title\":\"...\",\"intervals\":[\"...\"],\"notes\":[\"...\"],\"during\":\"Przy okazji ...\",\"disclaimer\":\"...\"}" +
+            "{\"title\":\"...\",\"intervals\":[\"...\"],\"notes\":[\"...\"],\"during\":\"Przy okazji ...\",\"disclaimer\":\"...\"}\n" +
             "Bez markdown, bez dodatkowego tekstu.\n" +
             $"Auto: {brand} {model} ({year}), paliwo: {fuelType}.\n" +
             $"Temat: {spec.Title}.\n" +
@@ -185,6 +194,7 @@ public sealed class GeminiAiAssistant : IAiAssistant
             "- intervals: 2–3 punkty tylko o interwałach (km + czas).\n" +
             "- notes: 2–3 punkty (objawy/czynniki skracające/uwagi zależnie od tematu).\n" +
             "- during: dokładnie 1 zdanie zaczynające się od \"Przy okazji\" i zawierające 2–4 elementy do sprawdzenia.\n" +
+            "- Każdy element w intervals i notes ma być CZYSTYM TEKSTEM, bez wypunktowań, bez znaków '•', '-', '*', ani numeracji.\n" +
             "- Nie dodawaj porad ogólnych niezwiązanych z tematem.\n" +
             "- Disclaimer: 1 zdanie (informacyjnie, bez straszenia).\n";
     }

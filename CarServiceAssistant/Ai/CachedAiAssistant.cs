@@ -12,7 +12,7 @@ public sealed class CachedAiAssistant : IAiAssistant
     readonly IAiAssistant _inner;
     readonly ILogger<CachedAiAssistant> _log;
 
-    static readonly TimeSpan Ttl = TimeSpan.FromDays(7);
+    static readonly TimeSpan Ttl = TimeSpan.Zero;
 
     public CachedAiAssistant(AppDbContext db, IAiAssistant inner, ILogger<CachedAiAssistant> log)
     {
